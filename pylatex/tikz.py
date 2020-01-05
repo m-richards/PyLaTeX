@@ -407,7 +407,6 @@ class TikZPathList(LatexObject):
         args: list
             A list of path elements
         """
-        print("TIKZPATHLIST", *args)
         self._last_item_type = None
         self._arg_list = []
 
@@ -416,11 +415,9 @@ class TikZPathList(LatexObject):
 
     def append(self, item):
         """Add a new element to the current path."""
-        print("TIKZPATHLIST.append", item)
         self._parse_next_item(item)
 
     def _parse_next_item(self, item):
-        print("TIKZPATHLIST.parse next", item, "last type=", self._last_item_type)
 
         # assume first item is a point
         if self._last_item_type is None:
@@ -436,7 +433,6 @@ class TikZPathList(LatexObject):
             # point after point is permitted, doesnt draw
             try:
                 self._add_point(item)
-                print("adding point", item)
                 return
             except (ValueError, TypeError):
                 # not a point, try path
@@ -444,19 +440,16 @@ class TikZPathList(LatexObject):
 
             # will raise typeerror if wrong
             self._add_path(item)
-            print("adding path", item)
         elif self._last_item_type == 'path':
             # only point allowed after path
             original_exception = None
             try:
                 self._add_point(item)
-                print("adding point", item)
                 return
             except (TypeError, ValueError) as ex:
                 # check if trying to insert path after path
                 try:
                     self._add_path(item, parse_only=True)
-                    print("adding path", item)
                     not_a_path = False
                     original_exception = ex
                 except (TypeError, ValueError) as ex:
@@ -477,7 +470,6 @@ class TikZPathList(LatexObject):
             original_exception = None
             try:
                 self._add_arc_spec(item)
-                print("adding arc", item)
                 return
             except (TypeError, ValueError) as ex:
                 raise ValueError('only an arc specifier can come after an '
@@ -605,16 +597,12 @@ class TikZPath(TikZObject):
         """Append a path element to the current list."""
         self.path.append(element)
 
-
     def dumps(self):
         """Return a representation for the command."""
-        print("path dumps", self.path)
 
         ret_str = [Command('path', options=self.options).dumps()]
 
         ret_str.append(self.path.dumps())
-        print("ret str", ret_str)
-        print("tot", ' '.join(ret_str) + ';')
         return ' '.join(ret_str) + ';'
 
 
