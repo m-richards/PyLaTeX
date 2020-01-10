@@ -481,6 +481,8 @@ def test_tikz():
     repr(tmp3)
     repr(tmp4)
     repr(tmp5)
+    s = TikZCalcScalar(value=3.4)
+    repr(s)
 
 
 def test_lists():
