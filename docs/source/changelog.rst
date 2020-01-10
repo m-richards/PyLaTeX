@@ -7,6 +7,11 @@ project adheres to `Semantic Versioning <http://semver.org/>`_.
 .. highlight:: bash
 
 Unreleased_ - `docs <../latest/>`__
+~~~~~
+- Extended TikZ basic drawing functions to support arcs, hobby paths,
+  inline path nodes, coordinate variable definitions and coordinate arithmetic
+  using calc. A very limited selection of TikZ libraries are automatically
+  detected and added to the preamble.
 -----------------------------------
 See these docs for changes that have not yet been released and are
 only present in the development version.
