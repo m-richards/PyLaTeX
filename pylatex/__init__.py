@@ -19,7 +19,7 @@ from .tikz import TikZ, Axis, Plot, TikZNode, TikZDraw, TikZCoordinate,\
     TikZOptions, TikZNodeAnchor, \
     TikZScope, TikZCoordinateVariable, TikZCalcScalar, TikZLibrary, \
     TikZCoordinateBase, _TikZCoordinateImplicitCalculation, \
-    _TikZCoordinateHandle, TikZRadius
+    _TikZCoordinateHandle, TikZRadius, TikZFill
 from .figure import Figure, SubFigure, StandAloneGraphic
 from .lists import Enumerate, Itemize, Description
 from .quantities import Quantity

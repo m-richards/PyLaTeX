@@ -180,6 +180,16 @@ class TikZCoordinate(TikZCoordinateBase):
             return other - self
         return TikZCoordinate(self._x - other_coord._x,
                               self._y - other_coord._y)
+    def __mul__(self, other):
+        if isinstance(other, (float, int)):
+            other = TikZCalcScalar(other)
+        if isinstance(other, TikZCalcScalar):
+            return _TikZCoordinateImplicitCalculation(other, '*', self)
+        else:
+            raise TypeError('Unsupported operand for types'
+                            ' {} and {}.'.format(type(self), type(other)))
+    def __rmul__(self, other):
+        return self.__mul__(other)
 
     def __rsub__(self, other):
         return self.__sub__(other)
@@ -340,6 +350,8 @@ class TikZNode(TikZObject):
 
         if isinstance(at, (TikZCoordinate, type(None))):
             self._node_position = at
+        elif isinstance(at, (tuple)):
+            self._node_position = TikZCoordinate(*at)
         else:
             raise TypeError(
                 'at parameter must be an object of the'
@@ -799,7 +811,7 @@ class TikZPathList(LatexObject):
                 # not a point, do something
                 raise TypeError(
                     'First element of path list must be a node identifier'
-                    ' or coordinate'
+                    ' or coordinate, got {}'
                 )
         elif self._last_item_type in ('point', 'arc'):
             # point after point is permitted, doesnt draw
@@ -846,6 +858,8 @@ class TikZPathList(LatexObject):
                 item = TikZRadius(item)
             if isinstance(item, TikZRadius) and item.is_ellipse is False:
                 self._arg_list.append(item)
+                self._last_item_type = 'point'  # not true, but this is the
+                # right case
             else:
                 raise ValueError("Expected a radius to follow 'circle' path "
                                  "specifier. Please supply any of (float, "
@@ -857,6 +871,8 @@ class TikZPathList(LatexObject):
                 item = TikZRadius(*item)
             if isinstance(item, TikZRadius) and item.is_ellipse:
                 self._arg_list.append(item)
+                self._last_item_type = 'point'  # not true, but this is the
+                # right case
             else:
                 raise ValueError("Expected a radius to follow 'circle' path "
                                  "specifier. Please supply any of (float, "
@@ -950,7 +966,7 @@ class TikZPath(TikZObject):
         """
         Args
         ----
-        path: TikZPathList
+        path: TikZPathList | list
             A list of the nodes, path types in the path
         options: TikZOptions
             A list of options for the command
@@ -992,22 +1008,41 @@ class TikZPath(TikZObject):
 class TikZDraw(TikZPath):
     """A draw command is just a path command with the draw option."""
 
-    def __init__(self, path=None, options=None):
-        """
-        Args
-        ----
-        path: `~.TikZPathList` or List
-            A list of the nodes, path types in the path
-        options: TikZOptions
-            A list of options for the command
-        """
-        super(TikZDraw, self).__init__(path=path, options=options)
-
     def dumps(self):
         r"""Return a representation for the command. Override
         to provide clearer syntax to user instead of \path[draw]
         """
         ret_str = [Command('draw', options=self.options).dumps()]
+
+        ret_str.append(self.path.dumps())
+        return ' '.join(ret_str) + ";"
+
+class TikZFill(TikZPath):
+    r"""Exposes /draw as a command directly accessible
+    """
+
+    def __init__(self, fill, path=None, options=None):
+        """
+        Args
+        ----
+        fill: str
+            Fill color - supplied explicitly since mandatory
+        path: `~.TikZPathList` or List
+            A list of the nodes, path types in the path
+        options: TikZOptions
+            A list of options for the command
+        """
+        if isinstance(options, TikZOptions):
+            options._positional_args.insert(0, fill)
+        else:
+            options = ([fill] + list(options)) if options is not None else [
+                fill]
+        self._fill = fill # just here to make latex object repr happy
+        super().__init__(path=path, options=options)
+
+    def dumps(self):
+
+        ret_str = [Command('fill', options=self.options).dumps()]
 
         ret_str.append(self.path.dumps())
         return ' '.join(ret_str) + ";"
