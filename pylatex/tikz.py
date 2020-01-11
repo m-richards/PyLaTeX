@@ -180,6 +180,7 @@ class TikZCoordinate(TikZCoordinateBase):
             return other - self
         return TikZCoordinate(self._x - other_coord._x,
                               self._y - other_coord._y)
+
     def __mul__(self, other):
         if isinstance(other, (float, int)):
             other = TikZCalcScalar(other)
@@ -188,6 +189,7 @@ class TikZCoordinate(TikZCoordinateBase):
         else:
             raise TypeError('Unsupported operand for types'
                             ' {} and {}.'.format(type(self), type(other)))
+
     def __rmul__(self, other):
         return self.__mul__(other)
 
@@ -543,14 +545,30 @@ class TikZCalcScalar(LatexObject):
 
 
 class TikZRadius(LatexObject):
+    """Object representing a radius or radii for use with path specifiers
+    'circle' or 'ellipse'.
+    Syntax is designed such that this conversion can
+    be handled internally and user can supply radius as a float or int
+    without issue.
+    """
 
     def __init__(self, radius, ellipse_second_rad=None):
+        """
+        Args
+        ----
+        radius: int | float
+            Radius scalar with unspecified units
+        ellipse_second_rad: init | float | None
+            secondary radius for use case with ellipse, is None if used for
+             a circle
+        """
         if ellipse_second_rad is None:
             self.is_ellipse = False
         self._radius = radius
         self._ellipse_second_rad = ellipse_second_rad
 
     def dumps(self):
+        """Return a representation for the command."""
         if self.is_ellipse:
             return "[x radius={}, y radius={}".format(self._radius,
                                                       self._ellipse_second_rad)
@@ -1017,9 +1035,9 @@ class TikZDraw(TikZPath):
         ret_str.append(self.path.dumps())
         return ' '.join(ret_str) + ";"
 
+
 class TikZFill(TikZPath):
-    r"""Exposes /draw as a command directly accessible
-    """
+    r"""Exposes /draw as a command directly accessible"""
 
     def __init__(self, fill, path=None, options=None):
         """
@@ -1037,11 +1055,11 @@ class TikZFill(TikZPath):
         else:
             options = ([fill] + list(options)) if options is not None else [
                 fill]
-        self._fill = fill # just here to make latex object repr happy
+        self._fill = fill  # just here to make latex object repr happy
         super().__init__(path=path, options=options)
 
     def dumps(self):
-
+        """Return a representation for the command."""
         ret_str = [Command('fill', options=self.options).dumps()]
 
         ret_str.append(self.path.dumps())
