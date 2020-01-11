@@ -499,9 +499,17 @@ class TikZCoordinateVariable(TikZCoordinateBase, TikZNode):
 
 
 class TikZCalcScalar(LatexObject):
-    """Wrapper for multiplication scalar in calc expressions e.g.
-    ($ 4*(3,2.2) $)
-    Written explicitly as a seperate class to enable dumps support.
+    """Wrapper for a scalar number required in various contents
+    for tikz commands.
+
+    Currently used as:
+        multiplication scalar in calc expressions e.g.
+            ($ 4*(3,2.2) $)
+
+    Ideally, usage should be written such that float/ int input arguments
+    are legal but are internally converted to allow use of dumps.
+
+    Written explicitly as a separate class to enable dumps support.
     Simpler than trying to deal with casting floats and strings
     without having other string parsing cause issues.
     """
@@ -520,6 +528,24 @@ class TikZCalcScalar(LatexObject):
         calculation.
         """
         return str(round(self._value, 2))
+
+
+class TikZRadius(LatexObject):
+
+    def __init__(self, radius, ellipse_second_rad=None):
+        if ellipse_second_rad is None:
+            self.is_ellipse = False
+        self._radius = radius
+        self._ellipse_second_rad = ellipse_second_rad
+
+    def dumps(self):
+        if self.is_ellipse:
+            return "[x radius={}, y radius={}".format(self._radius,
+                                                      self._ellipse_second_rad)
+        else:
+            return "[radius={}]".format(self._radius)
+
+
 
 
 class _TikZCoordinateImplicitCalculation(TikZCoordinateBase):
@@ -739,7 +765,7 @@ class TikZPathList(LatexObject):
     """Represents a path drawing."""
 
     _base_legal_path_types = ['--', '-|', '|-', 'to',
-                              'rectangle', 'circle',
+                              'rectangle', 'circle', 'ellipse',
                               'arc', 'edge']
 
     def __init__(self, *args, additional_path_types=None):
@@ -810,9 +836,31 @@ class TikZPathList(LatexObject):
         # not path.arc is path specifier "arc", not a TikZArcSpecifier
         elif self._last_item_type == 'path.arc':
             # only allow arc specifier after arc path
-            # note this will throw exceptions if incorrect
+
             self._add_arc_spec(item)
             return
+
+        elif self._last_item_type == 'path.circle':
+            # expecting a scalar for radius
+            if isinstance(item, (int, float)):
+                item = TikZRadius(item)
+            if isinstance(item, TikZRadius) and item.is_ellipse is False:
+                self._arg_list.append(item)
+            else:
+                raise ValueError("Expected a radius to follow 'circle' path "
+                                 "specifier. Please supply any of (float, "
+                                 "int , TikZRadius).")
+        elif self._last_item_type == 'path.ellipse':
+            # expecting a scalar for radius
+
+            if isinstance(item, tuple) and len(item) == 2:
+                item = TikZRadius(*item)
+            if isinstance(item, TikZRadius) and item.is_ellipse:
+                self._arg_list.append(item)
+            else:
+                raise ValueError("Expected a radius to follow 'circle' path "
+                                 "specifier. Please supply any of (float, "
+                                 "int , TikZRadius).")
 
     def _parse_arg_list(self, args):
 
@@ -837,6 +885,8 @@ class TikZPathList(LatexObject):
         # following to be a TikZArc not a point
         if _path.path_type == "arc":
             self._last_item_type += ".arc"
+        elif _path.path_type == "circle":
+            self._last_item_type += ".circle"
 
     def _add_point(self, point):
         if isinstance(point, str):
