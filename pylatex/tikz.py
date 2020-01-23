@@ -342,7 +342,8 @@ class TikZNode(TikZObject):
         options: list or `~.TikZOptions`
             List of options
         at: TikZCoordinate
-            Coordinate where node is placed
+            Coordinate where node is placed. This can be omitted if used in
+            inline context.
         text: str
             Body text of the node
         """
@@ -556,9 +557,9 @@ class TikZRadius(LatexObject):
         """
         Args
         ----
-        radius: int | float
+        radius: int or float
             Radius scalar with unspecified units
-        ellipse_second_rad: init | float | None
+        ellipse_second_rad: int or float or None
             secondary radius for use case with ellipse, is None if used for
              a circle
         """
@@ -569,11 +570,14 @@ class TikZRadius(LatexObject):
 
     def dumps(self):
         """Return a representation for the command."""
-        if self.is_ellipse:
-            return "[x radius={}, y radius={}".format(self._radius,
+        if self.is_elliptical():
+            return "[x radius={}, y radius={}]".format(self._radius,
                                                       self._ellipse_second_rad)
         else:
             return "[radius={}]".format(self._radius)
+
+    def is_elliptical(self)->bool:
+        return self._ellipse_second_rad is not None
 
 
 
@@ -820,6 +824,10 @@ class TikZPathList(LatexObject):
         self._parse_next_item(item)
 
     def _parse_next_item(self, item):
+        print("parsing ", item, "last = ", self._last_item_type)
+        if item is None:
+            return  # edge case handling for conditional parsing of
+                # default values into higher order functions
 
         # assume first item is a point
         if self._last_item_type is None:
@@ -874,7 +882,7 @@ class TikZPathList(LatexObject):
             # expecting a scalar for radius
             if isinstance(item, (int, float)):
                 item = TikZRadius(item)
-            if isinstance(item, TikZRadius) and item.is_ellipse is False:
+            if isinstance(item, TikZRadius) and item.is_elliptical() is False:
                 self._arg_list.append(item)
                 self._last_item_type = 'point'  # not true, but this is the
                 # right case
@@ -887,7 +895,7 @@ class TikZPathList(LatexObject):
 
             if isinstance(item, tuple) and len(item) == 2:
                 item = TikZRadius(*item)
-            if isinstance(item, TikZRadius) and item.is_ellipse:
+            if isinstance(item, TikZRadius) and item.is_elliptical():
                 self._arg_list.append(item)
                 self._last_item_type = 'point'  # not true, but this is the
                 # right case
@@ -910,7 +918,8 @@ class TikZPathList(LatexObject):
         elif isinstance(path, TikZUserPath):
             _path = path
         else:
-            raise TypeError('Only string or TikZUserPath types are allowed')
+            raise TypeError('Only string or TikZUserPath types are allowed in'
+                            ' path, got {}'.format(type(path)))
 
         # add
         self._arg_list.append(_path)
@@ -921,6 +930,8 @@ class TikZPathList(LatexObject):
             self._last_item_type += ".arc"
         elif _path.path_type == "circle":
             self._last_item_type += ".circle"
+        elif _path.path_type == "ellipse":
+            self._last_item_type += ".ellipse"
 
     def _add_point(self, point):
         if isinstance(point, str):
@@ -984,7 +995,7 @@ class TikZPath(TikZObject):
         """
         Args
         ----
-        path: TikZPathList | list
+        path: TikZPathList or list
             A list of the nodes, path types in the path
         options: TikZOptions
             A list of options for the command
