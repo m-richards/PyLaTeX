@@ -175,11 +175,14 @@ class TikZCoordinate(TikZCoordinateBase):
         return self.__add__(other)
 
     def __sub__(self, other):
+        print("subtracting", self, "with", other)
         other_coord = self._arith_check(other)
         if other_coord is False:
             return other - self
-        return TikZCoordinate(self._x - other_coord._x,
-                              self._y - other_coord._y)
+        print("new x", self._x, "-", other_coord._x )
+        print("new y", self._y, "-", other_coord._y )
+        return TikZCoordinate(other_coord._x - self._x,
+                              other_coord._y - self._y)
 
     def __mul__(self, other):
         if isinstance(other, (float, int)):
@@ -824,7 +827,6 @@ class TikZPathList(LatexObject):
         self._parse_next_item(item)
 
     def _parse_next_item(self, item):
-        print("parsing ", item, "last = ", self._last_item_type)
         if item is None:
             return  # edge case handling for conditional parsing of
                 # default values into higher order functions
