@@ -175,14 +175,16 @@ class TikZCoordinate(TikZCoordinateBase):
         return self.__add__(other)
 
     def __sub__(self, other):
-        print("subtracting", self, "with", other)
+        # print("subtracting", self, "with", other)
         other_coord = self._arith_check(other)
         if other_coord is False:
             return other - self
-        print("new x", self._x, "-", other_coord._x )
-        print("new y", self._y, "-", other_coord._y )
-        return TikZCoordinate(other_coord._x - self._x,
-                              other_coord._y - self._y)
+        # print("new y", self._y, "-", other_coord._y, '=',
+        #       TikZCoordinate(other_coord._x - self._x,
+        #                      other_coord._y - self._y)
+        #       )
+        return TikZCoordinate(self._x - other_coord._x,
+                              self._y - other_coord._y)
 
     def __mul__(self, other):
         if isinstance(other, (float, int)):
