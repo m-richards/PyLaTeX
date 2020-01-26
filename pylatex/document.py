@@ -88,23 +88,26 @@ class Document(Environment):
 
         packages = []
 
-        if fontenc is not None:
-            packages.append(Package('fontenc', options=fontenc))
-        if inputenc is not None:
-            packages.append(Package('inputenc', options=inputenc))
-        if lmodern:
-            packages.append(Package('lmodern'))
-        if textcomp:
-            packages.append(Package('textcomp'))
-        if page_numbers:
-            packages.append(Package('lastpage'))
-        if not indent:
-            packages.append(Package('parskip'))
-        if microtype:
-            packages.append(Package('microtype'))
+        # standalone doc should be minimalist
+        if documentclass != "standalone":
 
-        if geometry_options is not None:
-            packages.append(Package('geometry', options=geometry_options))
+            if fontenc is not None:
+                packages.append(Package('fontenc', options=fontenc))
+            if inputenc is not None:
+                packages.append(Package('inputenc', options=inputenc))
+            if lmodern:
+                packages.append(Package('lmodern'))
+            if textcomp:
+                packages.append(Package('textcomp'))
+            if page_numbers:
+                packages.append(Package('lastpage'))
+            if not indent:
+                packages.append(Package('parskip'))
+            if microtype:
+                packages.append(Package('microtype'))
+
+            if geometry_options is not None:
+                packages.append(Package('geometry', options=geometry_options))
 
         super().__init__(data=data)
 
